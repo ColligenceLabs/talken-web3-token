@@ -37,7 +37,7 @@ const getStatement = (sections: MessageSections): string | undefined => {
   }
 }
 
-const parseBody = (lines: string[]): DecryptedBody => {
+export const parseBody = (lines: string[]): DecryptedBody => {
 
   const sections = splitSections(lines);
   const main_section = sections[sections.length - 1].join('\n')
@@ -91,7 +91,7 @@ export const verify = (token: string, opts: VerifyOpts = {}) => {
 
   if(parsed_body['not-before'] && new Date(parsed_body['not-before']) > new Date()) {
     throw new Error('It\'s not yet time to use the token')
-  }  
+  }
 
   if(opts.domain && opts.domain !== parsed_body.domain) {
     throw new Error('Inappropriate token domain')

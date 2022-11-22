@@ -13,7 +13,7 @@ function isURL(str: string): boolean {
 }
 
 export const sign = async (
-  signer: Signer, 
+  signer: Signer,
   opts: string | SignOpts = '1d'
 ): Promise<string> => {
 
@@ -26,7 +26,7 @@ export const sign = async (
   const body = processParams(params);
 
   const msg = buildMessage(body);
-  
+
   const signature = await signer(msg);
 
   if(typeof signature !== 'string') {
@@ -101,6 +101,10 @@ const processParams = (params: SignOpts): SignBody => {
     body.chain_id = parseInt(String(params.chain_id));
   }
 
+  if(params.wallet) {
+    body.wallet = params.wallet;
+  }
+
   if(!params.uri && typeof window !== 'undefined' && window?.location?.href) {
     body.uri = window.location.href;
   }
@@ -142,12 +146,13 @@ const buildMessage = (params: SignBody): string => {
     'Expiration Time': params.expiration_time.toISOString(),
     'Not Before': params.not_before ? params.not_before.toISOString() : undefined,
     'Request ID': params.request_id,
+    'Wallet': params.wallet,
   };
 
   for (const label in param_labels) {
 
     if((param_labels as any)[label] !== undefined) {
-      
+
       // @ts-ignore
       message.push(`${label}: ${(param_labels as any)[label]}`)
     }

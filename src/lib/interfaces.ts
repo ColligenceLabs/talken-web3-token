@@ -15,10 +15,12 @@ export interface SignOpts {
   request_id?: string;
 
   domain?: string;
-  
+
   uri?: string;
 
   chain_id?: number;
+
+  wallet?: string;
 }
 
 export interface SignBody {
@@ -38,10 +40,12 @@ export interface SignBody {
   request_id?: string;
 
   domain?: string;
-  
+
   uri?: string;
 
   chain_id?: number;
+
+  wallet?: string;
 }
 
 
@@ -82,6 +86,7 @@ export interface DecryptedBody {
   'request-id'?: string;
   'statement'?: string;
   'domain'?: string;
+  'wallet'?: string;
 }
 
 

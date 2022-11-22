@@ -1,14 +1,16 @@
 import Base64 from 'base-64'
-import {
-  hashPersonalMessage,
-  toBuffer,
-  fromRpcSig,
-  ecrecover,
-  publicToAddress,
-  bufferToHex
-} from 'ethereumjs-util';
+// import {
+//   hashPersonalMessage,
+//   toBuffer,
+//   fromRpcSig,
+//   ecrecover,
+//   publicToAddress,
+//   bufferToHex
+// } from 'ethereumjs-util';
+import * as EthUtil from 'ethereumjs-util';
 import toHex from 'to-hex';
 import { DecrypterResult } from '../interfaces';
+import { parseBody } from './verify'
 
 const getVersion = (body: string): number => {
   // @ts-ignore
@@ -44,26 +46,50 @@ export const decrypt = (token: string): DecrypterResult => {
     throw new Error('Token malformed (empty signature)')
   }
 
-  const msgBuffer = toBuffer('0x' + toHex(body));
-  const msgHash = hashPersonalMessage(msgBuffer);
-  const signatureBuffer = toBuffer(signature);  
-  const signatureParams = fromRpcSig(signatureBuffer as any);
-  
-  const publicKey = ecrecover(
+  const lines = body.split('\n');
+  const parsed_body = parseBody(lines);
+  const prefix = (parsed_body.wallet === 'kaikas') ? kaikasSignPrefix : signPrefix;
+
+  const msgBuffer = EthUtil.toBuffer('0x' + toHex(body));
+  // const msgHash = hashPersonalMessage(msgBuffer);
+  const msgHash = hashPersonalMessagePrefix(msgBuffer, prefix);
+  const signatureBuffer = EthUtil.toBuffer(signature);
+  const signatureParams = EthUtil.fromRpcSig(signatureBuffer as any);
+
+  const publicKey = EthUtil.ecrecover(
     msgHash,
     signatureParams.v,
     signatureParams.r,
     signatureParams.s
   );
-  const addressBuffer = publicToAddress(publicKey);
-  const address = bufferToHex(addressBuffer).toLowerCase();
+  const addressBuffer = EthUtil.publicToAddress(publicKey);
+  const address = EthUtil.bufferToHex(addressBuffer).toLowerCase();
 
   const version = getVersion(body);
 
   return {
-    version, 
+    version,
     address,
-    body, 
+    body,
     signature
   }
+}
+
+const kaikasSignPrefix = '\x19Klaytn Signed Message:\n'
+const signPrefix = '\x19Ethereum Signed Message:\n'
+
+export const assertIsBuffer = function (input: any) {
+  if (!Buffer.isBuffer(input)) {
+    const msg = `This method only supports Buffer but input was: ${input}`
+    throw new Error(msg)
+  }
+}
+
+export const hashPersonalMessagePrefix = function(message: any, signPrefix: any) {
+  assertIsBuffer(message)
+  const prefix = Buffer.from(
+      `${signPrefix}${message.length.toString()}`,
+      'utf-8'
+  )
+  return EthUtil.keccak(Buffer.concat([prefix, message]))
 }
